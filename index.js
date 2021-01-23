@@ -9,6 +9,8 @@ const request = require('request');
 var bodyParser = require('body-parser');
 var urlencodedParser = bodyParser.urlencoded({ extended: false });
 const path = require('path');
+const cors = require("cors");
+app.use(cors());
 
 // returns the calculated hash value
 app.post("/api/get-hash",(req,res) => {
@@ -89,11 +91,11 @@ app.post('/payment/fail', (req, res) => {
 })
 
 
-app.use(express.static(path.join(__dirname, 'client/build')));
-app.use(express.static(path.join(__dirname, 'client/public')));
+app.use(express.static(path.join(__dirname, './build')));
+app.use(express.static(path.join(__dirname, './public')));
 
 app.get('/*', function (req, res) {
-    res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+    res.sendFile(path.join(__dirname, './build', 'index.html'));
 });
 
 app.use('*', (req, res) => {
