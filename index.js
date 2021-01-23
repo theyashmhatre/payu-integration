@@ -9,8 +9,6 @@ const request = require('request');
 var bodyParser = require('body-parser');
 var urlencodedParser = bodyParser.urlencoded({ extended: false });
 const path = require('path');
-const cors = require("cors");
-app.use(cors());
 
 // returns the calculated hash value
 app.post("/api/get-hash",(req,res) => {
