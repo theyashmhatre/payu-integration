@@ -2,7 +2,6 @@ import logo from './logo.svg';
 import './App.css';
 import React, { useState } from 'react';
 import axios from 'axios';
-import { BrowserRouter, Switch, Route, Redirect } from "react-router-dom";
 
 function App() {
 
