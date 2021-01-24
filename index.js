@@ -9,6 +9,8 @@ const request = require('request');
 var bodyParser = require('body-parser');
 var urlencodedParser = bodyParser.urlencoded({ extended: false });
 const path = require('path');
+const {nanoid} = require("nanoid");
+
 
 // returns the calculated hash value
 app.post("/api/get-hash",(req,res) => {
@@ -31,49 +33,58 @@ app.post("/api/payumoney", urlencodedParser, (req,res) => {
     const key = "tXjTgO";
     const salt = "QYcSzlbk";
 
-    // if (!req.body.txnid || !req.body.amount || !req.body.productinfo || !req.body.firstname || !req.body.email) {
-    //     res.status(400).json("Mandatory fields missing");
-    // }
-    var pd = JSON.parse(JSON.stringify(req.body));
+    try {
+        // if (!req.body.amount || !req.body.productinfo || !req.body.firstname || !req.body.email)
+        //     res.status(400).json({ msg: "Mandatory fields missing" }).end();
 
-    var hashString = key + '|' + pd.txnid + '|' + pd.amount + '|' + pd.productinfo + '|' + pd.firstname + '|' + pd.email + '|' + '||||||||||' + salt; // Your salt value
-    var sha = new jsSHA('SHA-512', "TEXT"); 
-    sha.update(hashString); 
-    var hash = sha.getHash("HEX");
-    pd.key = key;
-    pd.salt = salt;
-    pd.hash = hash;
-    console.log(pd);
+        var pd = JSON.parse(JSON.stringify(req.body));
+        pd.txnid = nanoid(5);
 
-    request.post({
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        },
-        url: 'https://sandboxsecure.payu.in/_payment', //Testing url
-        form: pd,
-    }, function (error, httpRes, body) {
-        if (error){
-            console.log("Error",error);
-            res.status(400).json(
-                {
-                    status: false,
-                    message: error
-                }
-            );
-        }
-        if (httpRes.statusCode === 200) {
-            res.send(body);
-        } else if (httpRes.statusCode >= 300 &&
-            httpRes.statusCode <= 400) {
-            res.redirect(httpRes.headers.location.toString());
-            console.log("error 300 and 400");
-        }
-    })
-})
+        var hashString = key + '|' + pd.txnid + '|' + pd.amount + '|' + pd.productinfo + '|' + pd.firstname + '|' + pd.email + '|' + '||||||||||' + salt; // Your salt value
+        var sha = new jsSHA('SHA-512', "TEXT");
+        sha.update(hashString);
+        var hash = sha.getHash("HEX");
+        pd.key = key;
+        pd.salt = salt;
+        pd.hash = hash;
+        pd.surl = process.env.PORT ? process.env.PORT + "/payment/success" : "http://localhost:4000/payment/success";
+        pd.furl = process.env.PORT ? process.env.PORT + "/payment/fail" : "http://localhost:4000/payment/fail";
+        console.log(pd);
+        const url = "https://test.payu.in/_payment";
+
+        request.post({
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            uri: url, //Testing url
+            form: pd,
+        }, function (error, httpRes, body) {
+            if (error) {
+                console.log("Error", error);
+                res.status(400).json(
+                    {
+                        status: false,
+                        message: error
+                    }
+                );
+            }
+            if (httpRes.statusCode === 200) {
+                res.send(body);
+            } else if (httpRes.statusCode >= 300 &&
+                httpRes.statusCode <= 400) {
+                res.redirect(httpRes.headers.location.toString());
+                console.log(httpRes.statusCode, httpRes.headers.location.toString());
+                console.log("error 300 and 400");
+            }
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }     
+});
 
 
-app.post('/payment/success', (req, res) => {
+app.post('/payment/success', urlencodedParser, (req, res) => {
     //Payumoney will send Success Transaction data to req body. 
     // Based on the response Implement UI as per you want
     console.log("success executed", req.body);
