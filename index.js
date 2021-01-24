@@ -47,8 +47,8 @@ app.post("/api/payumoney", urlencodedParser, (req,res) => {
         pd.key = key;
         pd.salt = salt;
         pd.hash = hash;
-        pd.surl = process.env.PORT ? process.env.PORT + "/payment/success" : "http://localhost:4000/payment/success";
-        pd.furl = process.env.PORT ? process.env.PORT + "/payment/fail" : "http://localhost:4000/payment/fail";
+        pd.surl = process.env.PORT ? "https://tranquil-chamber-38154.herokuapp.com/payment/success" : "http://localhost:4000/payment/success";
+        pd.furl = process.env.PORT ? "https://tranquil-chamber-38154.herokuapp.com/payment/fail" : "http://localhost:4000/payment/fail";
         console.log(pd);
         const url = "https://test.payu.in/_payment";
 
@@ -92,7 +92,7 @@ app.post('/payment/success', urlencodedParser, (req, res) => {
 });
 
 
-app.post('/payment/fail', (req, res) => {
+app.post('/payment/fail', urlencodedParser , (req, res) => {
     //Payumoney will send Fail Transaction data to req body. 
     // Based on the response Implement UI as per you want
     res.send(req.body);
