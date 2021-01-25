@@ -38,12 +38,14 @@ app.post("/api/payumoney", urlencodedParser, (req,res) => {
         //     res.status(400).json({ msg: "Mandatory fields missing" }).end();
 
         var pd = JSON.parse(JSON.stringify(req.body));
-        pd.txnid = nanoid(5);
+        pd.txnid = nanoid(10);  //generates a new txn id
 
+        //calculates the hash
         var hashString = key + '|' + pd.txnid + '|' + pd.amount + '|' + pd.productinfo + '|' + pd.firstname + '|' + pd.email + '|' + '||||||||||' + salt; // Your salt value
         var sha = new jsSHA('SHA-512', "TEXT");
         sha.update(hashString);
         var hash = sha.getHash("HEX");
+
         pd.key = key;
         pd.salt = salt;
         pd.hash = hash;
@@ -73,7 +75,7 @@ app.post("/api/payumoney", urlencodedParser, (req,res) => {
                 res.send(body);
             } else if (httpRes.statusCode >= 300 &&
                 httpRes.statusCode <= 400) {
-                res.redirect(httpRes.headers.location.toString());
+                res.redirect(httpRes.headers.location.toString());  // redirects to the payment url after 302 code
                 console.log(httpRes.statusCode, httpRes.headers.location.toString());
                 console.log("error 300 and 400");
             }
