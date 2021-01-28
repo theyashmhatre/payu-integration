@@ -31,8 +31,7 @@ app.post("/api/get-hash",(req,res) => {
 //sends a post request to the test payumoney url. 
 app.post("/api/payumoney", urlencodedParser, (req,res) => {
     console.log(" payu response Executed");
-    const key = "gtKFFx";
-    const salt = "eCwWELxi";
+
 
     try {
         if (!req.body.amount || !req.body.firstname || !req.body.email)
@@ -40,30 +39,50 @@ app.post("/api/payumoney", urlencodedParser, (req,res) => {
             throw new Error('Mandatory fields missing');
         }
 
-        var pd = JSON.parse(JSON.stringify(req.body));
-        pd.txnid = nanoid(10);  //generates a new txn id
-        pd.productinfo = '{"paymentParts": [{"name": "splitId123","merchantId ": "4825050","value": "10","commission": "5","description": "splitId1 summary"},{"name": "splitId231","merchantId ": "4825051","value": "10","commission": "5","description": "splitId2 summary"}]}';
+        console.log(req.body);
 
-        // pd.productinfo = "product1";
-        pd.service_provider = 'payu_paisa';
-
+        let key = 'BC50nb';
+        let salt = 'Bwxo1cPe';
+        let child_mid = req.body.childId;
+        let txnid = 'txn' + Math.round(Math.random(0, 1000) * 100000 + 1);
+        let amount = req.body.amount;
+        let commission = req.body.commission;
+        let value = amount - commission;
+        let productinfo = '{"paymentParts":[{"name":"splitId1","merchantId":"' + child_mid + '","value":"'+ value +'","commission":"'+ commission+'","description":"split description"}]}';
+        let firstname = req.body.firstname;
+        let email = req.body.email;
+        let phone = req.body.phone;
+        let service_provider = 'payu_paisa';
 
         //calculates the hash
-        var hashString = key + '|' + pd.txnid + '|' + pd.amount + '|' + pd.productinfo + '|' + pd.firstname + '|' + pd.email + '|' + 'ud1' + '|' + 'ud2' +'|||||||||' + salt; // Your salt value
+        let hash_string = key + "|" + txnid + "|" + amount + "|" + productinfo + "|" + firstname + "|" + email + "|||||||||||" + salt;
         var cryp = crypto.createHash('sha512');
-        cryp.update(hashString);
+        cryp.update(hash_string);
         var hash = cryp.digest('hex');
 
         //adding additional parameters
-        pd.key = key;
-        pd.salt = salt;
-        pd.hash = hash;
-        pd.udf1 = 'ud1';
-        pd.udf2 = 'ud2';
-        pd.surl = process.env.PORT ? "https://tranquil-chamber-38154.herokuapp.com/payment/success" : "http://localhost:4000/payment/success";
-        pd.furl = process.env.PORT ? "https://tranquil-chamber-38154.herokuapp.com/payment/fail" : "http://localhost:4000/payment/fail";
-        console.log(pd);
+        let hashValue = hash;
+        let surl = process.env.PORT ? "https://tranquil-chamber-38154.herokuapp.com/payment/success" : "http://localhost:4000/payment/success";
+        let furl = process.env.PORT ? "https://tranquil-chamber-38154.herokuapp.com/payment/fail" : "http://localhost:4000/payment/fail";
+        
         const url = "https://test.payu.in/_payment";
+
+        const data = {
+            txnid : txnid,
+            amount : amount,
+            productinfo : productinfo,
+            firstname: firstname,
+            email: email,
+            phone: phone,
+            key: key,
+            salt: salt,
+            hash: hashValue,
+            surl : surl,
+            furl: furl,
+            service_provider: service_provider
+        };
+
+        console.log(data);
 
         request.post({
             headers: {
@@ -71,7 +90,7 @@ app.post("/api/payumoney", urlencodedParser, (req,res) => {
                 'Accept': 'application/json',
             },
             uri: url, //Testing url
-            form: pd,
+            form: data,
         }, function (error, httpRes, body) {
             if (error) {
                 console.log("Error", error);
@@ -102,23 +121,54 @@ app.post('/payment/success', urlencodedParser, (req, res) => {
     // Based on the response Implement UI as per you want
     console.log("success executed", req.body);
 
-    const pd = req.body;
-    const key = "tXjTgO";
-    const salt = "QYcSzlbk";
+    let key = 'BC50nb';
+    let salt = 'Bwxo1cPe';
+    let txnid = req.body.txnid;
+    let amount = req.body.amount;
+    let productinfo = req.body.productinfo;
+    let firstname = req.body.firstname;
+    let email = req.body.email;
+    let status = req.body.status;
 
-    var hashString = key + '|' + pd.txnid + '|' + pd.amount + '|' + pd.productinfo + '|' + pd.firstname + '|' + pd.email + '|' + '||||||||||';
-    var reversedString = hashString.split('').reverse().join('');
-    var reversedHashString = salt + '|' + pd.status + '|' + reversedString;
+    var hashString = salt + '|' + status + '|' + '||||||||||' + email + '|' + firstname + '|' + productinfo + '|' + amount + '|' + txnid + '|' + key;
 
-
+    console.log(hashString);
     var cryp = crypto.createHash('sha512');
-    cryp.update(reversedHashString);
+    cryp.update(hashString);
     var hash = cryp.digest('hex');
 
-    if (pd.hash === hash){ console.log("hash values matched!");}
-    else {console.log("values didnt match!!!", pd.hash, hash);}
+
+    //checking if the two hashes are equal. and then completing the txn. else, cancel it.
+    if (req.body.hash === hash) { console.log("hash values matched!");  }
+    else { console.log("values didnt match!!!", req.body.hash, hash); }
 
     res.send(req.body);
+});
+
+
+
+
+app.post('/api/verifyHash', urlencodedParser, (req,res) => {
+    console.log("success executed", req.body);
+
+    let key = 'BC50nb';
+    let salt = 'Bwxo1cPe';
+    let txnid = req.body.txnid;
+    let amount = req.body.amount;
+    let productinfo = req.body.productinfo;
+    let firstname = req.body.firstname;
+    let email = req.body.email;
+    let status = req.body.status;
+
+    var hashString = salt + '|' + status + '|' + '||||||||||' + email + '|' + firstname + '|' + productinfo + '|' + amount + '|' + txnid + '|' + key;
+
+    console.log(hashString);
+    var cryp = crypto.createHash('sha512');
+    cryp.update(hashString);
+    var hash = cryp.digest('hex');
+
+    if (req.body.hash === hash) { console.log("hash values matched!"); res.send("hurray!!!"); }
+    else { console.log("values didnt match!!!", req.body.hash, hash); res.send("bad luck!"); }
 });
 
 

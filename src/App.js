@@ -17,6 +17,8 @@ function App() {
     email: "",
     phone: "",
     hash: "",
+    childId: "",
+    commission: "",
     surl: 'http://localhost:4000/payment/success',
     furl: 'http://localhost:4000/payment/fail',
   });
@@ -42,7 +44,7 @@ function App() {
         </label>
         <label>
           Amount:
-          <input type="text" name="amount" onChange={handleChange} value={formValue.amount} />
+          <input type="number" name="amount" onChange={handleChange} value={formValue.amount} />
         </label>
         <label>
           Email:
@@ -50,9 +52,19 @@ function App() {
         </label>
         <label>
           Phone:
-          <input type="text" name="phone" onChange={handleChange} value={formValue.phone} />
+          <input type="number" name="phone" onChange={handleChange} value={formValue.phone} />
         </label>
         <input type="hidden" id="lastname" name="lastname" value="test"></input>
+
+        <label>
+          ChildMerchantId:
+          <input type="number" name="childId" onChange={handleChange} value={formValue.childId} />
+        </label>
+
+        <label>
+          Commission:
+          <input type="number" name="commission" onChange={handleChange} value={formValue.commission} />
+        </label>
 
         <input type="submit" value="Submit" />
       </form>
