@@ -5,6 +5,7 @@ const cors = require("cors");
 app.use(cors());
 app.use(express.json());
 var jsSHA = require("jssha");
+var crypto = require('crypto');
 const request = require('request');
 var bodyParser = require('body-parser');
 var urlencodedParser = bodyParser.urlencoded({ extended: false });
@@ -30,25 +31,35 @@ app.post("/api/get-hash",(req,res) => {
 //sends a post request to the test payumoney url. 
 app.post("/api/payumoney", urlencodedParser, (req,res) => {
     console.log(" payu response Executed");
-    const key = "tXjTgO";
-    const salt = "QYcSzlbk";
+    const key = "gtKFFx";
+    const salt = "eCwWELxi";
 
     try {
-        // if (!req.body.amount || !req.body.productinfo || !req.body.firstname || !req.body.email)
-        //     res.status(400).json({ msg: "Mandatory fields missing" }).end();
+        if (!req.body.amount || !req.body.firstname || !req.body.email)
+            {res.status(400).json({ msg: "Mandatory fields missing" }).end();
+            throw new Error('Mandatory fields missing');
+        }
 
         var pd = JSON.parse(JSON.stringify(req.body));
         pd.txnid = nanoid(10);  //generates a new txn id
+        pd.productinfo = '{"paymentParts": [{"name": "splitId123","merchantId ": "4825050","value": "10","commission": "5","description": "splitId1 summary"},{"name": "splitId231","merchantId ": "4825051","value": "10","commission": "5","description": "splitId2 summary"}]}';
+
+        // pd.productinfo = "product1";
+        pd.service_provider = 'payu_paisa';
+
 
         //calculates the hash
-        var hashString = key + '|' + pd.txnid + '|' + pd.amount + '|' + pd.productinfo + '|' + pd.firstname + '|' + pd.email + '|' + '||||||||||' + salt; // Your salt value
-        var sha = new jsSHA('SHA-512', "TEXT");
-        sha.update(hashString);
-        var hash = sha.getHash("HEX");
+        var hashString = key + '|' + pd.txnid + '|' + pd.amount + '|' + pd.productinfo + '|' + pd.firstname + '|' + pd.email + '|' + 'ud1' + '|' + 'ud2' +'|||||||||' + salt; // Your salt value
+        var cryp = crypto.createHash('sha512');
+        cryp.update(hashString);
+        var hash = cryp.digest('hex');
 
+        //adding additional parameters
         pd.key = key;
         pd.salt = salt;
         pd.hash = hash;
+        pd.udf1 = 'ud1';
+        pd.udf2 = 'ud2';
         pd.surl = process.env.PORT ? "https://tranquil-chamber-38154.herokuapp.com/payment/success" : "http://localhost:4000/payment/success";
         pd.furl = process.env.PORT ? "https://tranquil-chamber-38154.herokuapp.com/payment/fail" : "http://localhost:4000/payment/fail";
         console.log(pd);
@@ -57,7 +68,7 @@ app.post("/api/payumoney", urlencodedParser, (req,res) => {
         request.post({
             headers: {
                 'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                'Accept': 'application/json',
             },
             uri: url, //Testing url
             form: pd,
@@ -81,7 +92,7 @@ app.post("/api/payumoney", urlencodedParser, (req,res) => {
             }
         });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.log(err);
     }     
 });
 
@@ -90,6 +101,23 @@ app.post('/payment/success', urlencodedParser, (req, res) => {
     //Payumoney will send Success Transaction data to req body. 
     // Based on the response Implement UI as per you want
     console.log("success executed", req.body);
+
+    const pd = req.body;
+    const key = "tXjTgO";
+    const salt = "QYcSzlbk";
+
+    var hashString = key + '|' + pd.txnid + '|' + pd.amount + '|' + pd.productinfo + '|' + pd.firstname + '|' + pd.email + '|' + '||||||||||';
+    var reversedString = hashString.split('').reverse().join('');
+    var reversedHashString = salt + '|' + pd.status + '|' + reversedString;
+
+
+    var cryp = crypto.createHash('sha512');
+    cryp.update(reversedHashString);
+    var hash = cryp.digest('hex');
+
+    if (pd.hash === hash){ console.log("hash values matched!");}
+    else {console.log("values didnt match!!!", pd.hash, hash);}
+
     res.send(req.body);
 });
 

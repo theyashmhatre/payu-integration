@@ -45,10 +45,6 @@ function App() {
           <input type="text" name="amount" onChange={handleChange} value={formValue.amount} />
         </label>
         <label>
-          ProductInfo:
-          <input type="text" name="productinfo" onChange={handleChange} value={formValue.productinfo} />
-        </label>
-        <label>
           Email:
           <input type="email" name="email" onChange={handleChange} value={formValue.email} />
         </label>
@@ -56,7 +52,7 @@ function App() {
           Phone:
           <input type="text" name="phone" onChange={handleChange} value={formValue.phone} />
         </label>
-        <input type="hidden" id="lastname" name="lastname" value="mhatre"></input>
+        <input type="hidden" id="lastname" name="lastname" value="test"></input>
 
         <input type="submit" value="Submit" />
       </form>
